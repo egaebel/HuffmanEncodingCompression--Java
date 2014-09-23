@@ -584,7 +584,7 @@ public class HuffmanCompression {
 
             if (myChar.charValue() == '\n') {
                 
-                os.write("\\n".getBytes());
+                os.write("\n".getBytes());
             }
             else {
                 
@@ -686,13 +686,22 @@ public class HuffmanCompression {
 
                 //Check for the current encoding in the mapping
                 if (encodingMap.containsKey(curEncoding)) {
-                    System.out.println("char--" + encodingMap.get(curEncoding));
+
                     totalLeftoverBitsRead += curEncoding.length();
                     totalBytesRead += (totalLeftoverBitsRead / 8);
                     totalLeftoverBitsRead %= 8;
 
                     decodedChar = encodingMap.get(curEncoding);
-                    build.append(Character.toString(decodedChar));
+                    System.out.println((int) decodedChar);
+
+                    if ((int) decodedChar != 13) {
+
+                        build.append(Character.toString(decodedChar));
+                    }
+                    else {
+                        build.append("\n");
+                    }
+                    System.out.println(build.toString());
 
                     encodingStart = encodingEnd;
                     prevEncodingEnd = encodingEnd;
@@ -703,7 +712,7 @@ public class HuffmanCompression {
 
                     System.out.println("Decompressed stuff: ||");
                     System.out.println(build.toString());
-                    System.out.println("end readCompressed method");
+                    System.out.println("UPPER end readCompressed method");
                     is.close();
                     return;
                 }
@@ -722,7 +731,7 @@ public class HuffmanCompression {
         is.close();
 
         System.out.println("Decompressed stuff: ||" + build.toString() + "||");
-        System.out.println("end readCompressed method");
+        System.out.println("LOWER end readCompressed method");
     }
 
     public void decompressFile(String fileName, String encodingFileName) throws FileNotFoundException {
