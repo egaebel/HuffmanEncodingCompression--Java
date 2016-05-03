@@ -4,18 +4,19 @@
 * 
 * Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
 * and associated documentation files (the "Software"), to deal in the Software without restriction, 
-* including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-* and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
-* subject to the following conditions:
+* including without limitation the rights to use, copy, modify, merge, publish, distribute, 
+* sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is 
+* furnished to do so, subject to the following conditions:
 * 
-* The above copyright notice and this permission notice shall be included in all copies or substantial 
-* portions of the Software.
+* The above copyright notice and this permission notice shall be included in all copies or 
+* substantial portions of the Software.
 * 
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING 
-* BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
-* WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
-* OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+* BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+* NONINFRINGEMENT. 
+* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
+* CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 import java.util.Scanner;
@@ -38,8 +39,14 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.nio.IntBuffer;
 
+/**
+ * Perform HuffmanCompression on a text file.
+ */
 public class HuffmanCompression {
 
+    /**
+     * Main method.
+     */
     public static void main(String[] args) throws FileNotFoundException, IOException {
 
         if (args.length == 0) {
@@ -61,18 +68,28 @@ public class HuffmanCompression {
         }
     }
 
+    //~Constants------------------------------------------------------------------------------------
     private static final String MAGIC_ENCODING_DELIMITER = ":::DELIMITOR-EXTRORDINAIRE!!!!:::";
     private static final String MAGIC_LINE_ENDER = "::::::::::\n";
     private static final String MAGIC_STRING_OF_COLONS = "::::::::::";
 
+    /**
+     * Inner class to support bit-level byte manipulation in an array of bytes.
+     * This array of bytes can be accessed by a byte index and a bit index. 
+     */
     private class FineBytes {
 
+        //~Constants-----------------------------------
         private static final int DEFAULT_CAPACITY = 20;
 
+        //~Fields--------------------------------------
         private byte[] bytes;
         private int bitIndex;
         private int byteIndex;
 
+        /**
+         * Set up the byte array with the DEFAULT_CAPACITY (20) and 0 out everything.
+         */
         public FineBytes() {
             
             bytes = new byte[DEFAULT_CAPACITY];
@@ -84,6 +101,9 @@ public class HuffmanCompression {
             byteIndex = 0;
         }
 
+        /**
+         * Set up the byte array with the passed in capacity and 0 out everything.
+         */
         public FineBytes(int capacity) {
             
             bytes = new byte[capacity];
@@ -95,6 +115,9 @@ public class HuffmanCompression {
             byteIndex = 0;
         }
 
+        /**
+         * Set up the byte array with the passed in byte array.
+         */
         public FineBytes(byte[] bytes) {
             
             this.bytes = bytes;
@@ -102,7 +125,9 @@ public class HuffmanCompression {
             byteIndex = bytes.length;
         }
 
-        //The string is assumed to have the MSB first, at index 0.
+        /**
+         * Set up the byte array using a string of binary digits. 
+         */
         public FineBytes(String binaryString) {
 
             bytes = new byte[((int) Math.ceil(binaryString.length() / 8))];
@@ -123,8 +148,7 @@ public class HuffmanCompression {
                     byteSizedString = binaryString.substring(i, i + 8);
                     bytes[byteIndex] = this.parseBinaryString(byteSizedString);
                     byteIndex++;
-                }
-                else {
+                } else {
                     
                     byteSizedString = binaryString.substring(i, binaryString.length());
                     bytes[byteIndex] = this.parseBinaryString(byteSizedString);
@@ -133,6 +157,9 @@ public class HuffmanCompression {
             }
         }
 
+        /**
+         * Double the size of the byte array.
+         */
         private void resize() {
             byte[] newBytes = new byte[bytes.length * 2];
             for (int i = 0; i < bytes.length; i++) {
@@ -146,6 +173,9 @@ public class HuffmanCompression {
             bytes = newBytes;
         }
 
+        /**
+         * Add an array of bytes to the end.
+         */
         public void addBytes(byte[] newBytes) {
 
             if ((byteIndex + newBytes.length) >= bytes.length) {
@@ -179,12 +209,11 @@ public class HuffmanCompression {
                         bitMask = 0x01;
                         break;
                     default:
-                        Object o = null;
-                        o.toString();
-                        break;
+                        throw IllegalStateException("");
                 }
 
-                bytes[this.byteIndex] = (byte) ((bytes[this.byteIndex] << (8 - bitIndex)) ^ ((newBytes[0] >>> this.bitIndex) & bitMask));
+                bytes[this.byteIndex] = (byte) ((bytes[this.byteIndex] << (8 - bitIndex)) 
+                        ^ ((newBytes[0] >>> this.bitIndex) & bitMask));
                 this.byteIndex++;
                 int newBytesBitIndex = 8 - this.bitIndex;
                 this.bitIndex = 0;
@@ -219,12 +248,11 @@ public class HuffmanCompression {
                                 bitMask = 0x01;
                                 break;
                             default:
-                                Object o = null;
-                                o.toString();
-                                break;
+                                throw IllegalStateException("");
                         }
 
-                        bytes[this.byteIndex] = (byte) ((bytes[this.byteIndex] << (8 - bitIndex)) ^ ((newBytes[newByteIndex] >>> this.bitIndex) & bitMask));
+                        bytes[this.byteIndex] = (byte) ((bytes[this.byteIndex] << (8 - bitIndex)) 
+                                ^ ((newBytes[newByteIndex] >>> this.bitIndex) & bitMask));
                         this.byteIndex++;
                         newBytesBitIndex = 8 - this.bitIndex;
                         this.bitIndex = 0;                        
@@ -255,12 +283,11 @@ public class HuffmanCompression {
                                 bitMask = 0x01;
                                 break;
                             default:
-                                Object o = null;
-                                o.toString();
-                                break;
+                                throw IllegalStateException("");
                         }
 
-                        bytes[this.byteIndex] = (byte) ((bytes[this.byteIndex]) ^ (newBytes[newByteIndex] & bitMask));
+                        bytes[this.byteIndex] = (byte) ((bytes[this.byteIndex]) 
+                                ^ (newBytes[newByteIndex] & bitMask));
                         this.bitIndex = 8 - newBytesBitIndex;
                         newByteIndex++;
                     }
@@ -275,6 +302,9 @@ public class HuffmanCompression {
             }
         }
 
+        /**
+         * Add a string of bits to the end.
+         */
         public void addBits(String binaryString) {
 
             //If we need to resize
@@ -286,19 +316,22 @@ public class HuffmanCompression {
             String byteSizedString;
             if (bitIndex != 0) {
 
-                int substringEndIndex = ((8 - bitIndex) > binaryString.length()) ? binaryString.length() : (8 - bitIndex);
+                int substringEndIndex = ((8 - bitIndex) > binaryString.length()) 
+                        ? binaryString.length() : (8 - bitIndex);
                 String bitSmallerString = binaryString.substring(0, substringEndIndex);
                 byte tempByte = this.parseBinaryString(bitSmallerString);
 
                 //handle the fucking signed-ness
                 if ((bitIndex + substringEndIndex) <= 7) {
 
-                    bytes[byteIndex] = (byte) ((((int) bytes[byteIndex]) << substringEndIndex) ^ tempByte);
+                    bytes[byteIndex] = (byte) ((((int) bytes[byteIndex]) << substringEndIndex) 
+                            ^ tempByte);
                     bitIndex += substringEndIndex;
                 }
                 else {
 
-                    bytes[byteIndex] = (byte) ((((int) bytes[byteIndex]) << substringEndIndex) ^ tempByte);
+                    bytes[byteIndex] = (byte) ((((int) bytes[byteIndex]) << substringEndIndex) 
+                            ^ tempByte);
                     bitIndex = 0;
                     byteIndex++;
                 }
@@ -314,7 +347,8 @@ public class HuffmanCompression {
                 
                 if (bitIndex != 0) {
 
-                    int substringEndIndex = ((8 - bitIndex) > binaryString.length()) ? binaryString.length() : (8 - bitIndex);
+                    int substringEndIndex = ((8 - bitIndex) > binaryString.length()) 
+                            ? binaryString.length() : (8 - bitIndex);
                     String bitSmallerString = binaryString.substring(0, substringEndIndex);
                     byte tempByte = this.parseBinaryString(bitSmallerString);
                     bytes[byteIndex] = (byte) ((bytes[byteIndex] << substringEndIndex) ^ tempByte);
@@ -344,6 +378,9 @@ public class HuffmanCompression {
             }
         }
 
+        /**
+         * Parse a string of binary digits into bytes.
+         */
         public byte parseBinaryString(String binaryString) {
 
             //If we're going to overflow
@@ -357,6 +394,9 @@ public class HuffmanCompression {
             return Byte.parseByte(binaryString, 2);
         }
 
+        /**
+         * Get the byte at the end of the array which is not fully used.
+         */
         public Byte getIncompleteByte() {
             
             if (bitIndex != 0) {
@@ -369,16 +409,26 @@ public class HuffmanCompression {
             }
         }
 
+        /**
+         * Check if there is a byte at the end of the array which is not fully used.
+         */
         public boolean hasIncompleteByte() {
             
             return (bitIndex != 0);
         }
 
+        /**
+         * Get all the bytes backing this object.
+         * The bytes are copied and returned.
+         */
         public byte[] getCompleteBytes() {
 
             return (bitIndex != 0) ? copyBackingArray(byteIndex) : copyBackingArray(byteIndex + 1);
         }
 
+        /**
+         * Copy the backing array of this object.
+         */
         private byte[] copyBackingArray() {
 
             byte[] copy = new byte[bytes.length];
@@ -390,6 +440,10 @@ public class HuffmanCompression {
             return copy;
         }
 
+        /**
+         * Copy the backing array of this object up until index.
+         * Index is exclusive.
+         */
         private byte[] copyBackingArray(int index) {
             
             byte[] copy = new byte[index + 1];
@@ -402,13 +456,19 @@ public class HuffmanCompression {
             return copy;   
         }
 
+        /**
+         * Get all the fully filled in bytes. Excluding any partially filled in bytes.
+         */
         public byte[] getBytes() {
 
             int copyIndex = (bitIndex != 0) ? byteIndex : (byteIndex - 1);
             return copyBackingArray(copyIndex);
         }
 
-        public String getBitString(byte b) {
+        /**
+         * Get the bit string of a passed byte.
+         */
+        public static String getBitString(byte b) {
 
             StringBuilder build = new StringBuilder();
 
@@ -425,7 +485,10 @@ public class HuffmanCompression {
             return build.toString();
         }
 
-        public String getBitString(byte[] bytes) {
+        /**
+         * Get the bit string of a passed byte array.
+         */
+        public static String getBitString(byte[] bytes) {
 
             StringBuilder build = new StringBuilder();
 
@@ -438,6 +501,9 @@ public class HuffmanCompression {
             return build.toString();
         }
 
+        /**
+         * Get the bit string of this FineBytes object.
+         */
         public String getBitString() {
 
             StringBuilder build = new StringBuilder();
@@ -477,6 +543,9 @@ public class HuffmanCompression {
             return build.toString();
         }
 
+        /**
+         * Get a hex string of the bytes in this FineBytes object.
+         */
         public String getHexString() {
 
             StringBuilder build = new StringBuilder();
@@ -508,6 +577,9 @@ public class HuffmanCompression {
             return build.toString();
         }
 
+        /**
+         * Clear out the bytes and bits in this object.
+         */
         public void clear() {
             
             bytes = new byte[bytes.length];
@@ -515,29 +587,48 @@ public class HuffmanCompression {
             byteIndex = 0;
         }
 
+        /**
+         * Get the number of bytes in this object (including partials).
+         */
         public int numBytes() {
             
             return byteIndex;
         }
 
+        /**
+         * Get the total number of bits in this object.
+         */
         public int numBits() {
             
             return (byteIndex * 8) + bitIndex;
         }
     }
 
+    /**
+     * Compress the file corresponding to the passed name.
+     *
+     * @param fileName the name of the file to compress.
+     */
     public void compressFile(String fileName) throws FileNotFoundException, IOException {
 
         File file = new File(fileName);
 
-        Map<Character, String> encoding = huffmanEncoding(file);
+        Map<Character, String> encoding = HuffmanEncoding(file);
 
         File compressedFile = new File(fileName + "--compressed");
         writeCompressed(file, compressedFile, encoding);
         readCompressed(fileName + "--compressed", "encoding-file.txt");
     }
 
-    public void writeCompressed(File file, File compressedFile, Map<Character, String> encoding) throws FileNotFoundException, IOException {
+    /**
+     * Write the compressed file.
+     *
+     * @param fileName the file to compress.
+     * @param compressedFile the file to write the compressed file data to.
+     * @param encoding a Mapping from characters to strings indicating the Huffman encoding to use.
+     */
+    public void writeCompressed(File file, File compressedFile, Map<Character, String> encoding) 
+            throws FileNotFoundException, IOException {
 
         System.out.println("writeCompressed");
 
@@ -618,6 +709,9 @@ public class HuffmanCompression {
         os.close();
     }
 
+    /**
+     * Unpack an int from a ByteBuffer....
+     */
     private int getInt(ByteBuffer bb, int intIndex) {
 
         int myInt = 0;
@@ -629,7 +723,15 @@ public class HuffmanCompression {
         return myInt;
     }
 
-    public void readCompressed(String compressedFileName, String encodingFileName) throws FileNotFoundException, IOException {
+    /**
+     * Read from a compressed file.
+     *
+     * @param compressedFileName the name of the compressed file.
+     * @param encodingFileName the name of the file holding the encoding 
+     *          used on the compressed file.
+     */
+    public void readCompressed(String compressedFileName, String encodingFileName) 
+            throws FileNotFoundException, IOException {
 
         System.out.println("readCompressed Method");
         StringBuilder build = new StringBuilder();
@@ -728,7 +830,8 @@ public class HuffmanCompression {
                     curEncoding = null;
                     continue;
                 }
-                else if (totalBytesRead == totalBytes && totalLeftoverBitsRead == totalLeftoverBits) {
+                else if (totalBytesRead == totalBytes 
+                        && totalLeftoverBitsRead == totalLeftoverBits) {
 
                     System.out.println("Decompressed stuff: ||");
                     System.out.println(build.toString());
@@ -754,7 +857,8 @@ public class HuffmanCompression {
         System.out.println("LOWER end readCompressed method");
     }
 
-    public void decompressFile(String fileName, String encodingFileName) throws FileNotFoundException {
+    public void decompressFile(String fileName, String encodingFileName) 
+            throws FileNotFoundException {
 
         //Read encoding file
         Map<String, Character> encodingMap = readEncodingFile(encodingFileName);
@@ -765,7 +869,13 @@ public class HuffmanCompression {
 
     }
 
-    private Map<String, Character> readEncodingFile(String encodingFileName) throws FileNotFoundException {
+    /**
+     * Read the encoding file indicated by encodingFileName.
+     *
+     * @param encodingFileName the name of the file holding the Huffman encoding information.
+     */
+    private Map<String, Character> readEncodingFile(String encodingFileName) 
+            throws FileNotFoundException {
 
         File encodingFile = new File(encodingFileName);
         Scanner scan = new Scanner(encodingFile);
@@ -781,7 +891,6 @@ public class HuffmanCompression {
 
             //This magical character is breaking things here.....it's like carbon monoxide....
             if (encodingLine.indexOf(MAGIC_ENCODING_DELIMITER) == 0) {
-                
                 continue;
             }
 
@@ -796,7 +905,7 @@ public class HuffmanCompression {
     }
 
     //Wrapper class to store data about characters read from file and 
-    //also has fields to construct a huffman tree
+    //also has fields to construct a Huffman tree
     class HuffmanNode {
         float freq;
         Character c;
@@ -804,7 +913,12 @@ public class HuffmanCompression {
         HuffmanNode right;
     }
 
-    public Map<Character, String> huffmanEncoding(File file) throws FileNotFoundException {
+    /**
+     * Run the Huffman Encoding algorithm on the passed in file to find a short character encoding.
+     * 
+     * @param file the text file to run the Huffman encoding on.
+     */
+    public Map<Character, String> HuffmanEncoding(File file) throws FileNotFoundException {
 
         //Read in characters and organize data
         Map<Character, HuffmanNode> initialCharacterMap = new HashMap<Character, HuffmanNode>();
@@ -834,7 +948,7 @@ public class HuffmanCompression {
             }
         }
 
-        //Find the huffman encoding---------------------------------
+        //Find the Huffman encoding---------------------------------
         //Define PriorityQueue w/Comparator
         PriorityQueue<HuffmanNode> q = new PriorityQueue<HuffmanNode>(initialCharacterMap.size(), 
             new Comparator<HuffmanNode>() {
@@ -856,14 +970,14 @@ public class HuffmanCompression {
         });
 
         //Divide the counts in each node by the total number of characters
-        //and add nodes to the priority queue to prep for huffman tree algorithm
+        //and add nodes to the priority queue to prep for Huffman tree algorithm
         for (HuffmanNode hn : initialCharacterMap.values()) {
 
             hn.freq /= numChars;
             q.add(hn);
         }
 
-        //Construct huffman tree
+        //Construct Huffman tree
         HuffmanNode innerNode;
         HuffmanNode left;
         HuffmanNode right;
@@ -887,7 +1001,18 @@ public class HuffmanCompression {
         return encodingMap;
     }
 
-    private void getEncodingFromHuffmanTree(HuffmanNode root, Map<Character, String> encodingMap, String curEncoding) {
+    /** 
+     * Use the Huffman Tree whose root node is passed in to recursively determine the encoding
+     * for each character.
+     *
+     * @param root the root of the Huffman Tree.
+     * @param encodingMap a map to keep track of encodings.
+     * @param curEncoding the running encoding used to keep track of the encoding across recursive
+     *          calls.
+     */
+    // TODO: Use StringBuffer instead.
+    private void getEncodingFromHuffmanTree(HuffmanNode root, Map<Character, String> encodingMap, 
+            String curEncoding) {
 
         if (root.c != null) {
             
