@@ -83,7 +83,7 @@ public class HuffmanCompression {
 
         File file = new File(fileName);
 
-        Map<Character, String> encoding = HuffmanEncoding(file);
+        Map<Character, String> encoding = huffmanEncoding(file);
 
         File compressedFile = new File(fileName + "--compressed");
         writeCompressed(file, compressedFile, encoding);
@@ -175,20 +175,6 @@ public class HuffmanCompression {
     }
 
     /**
-     * Unpack an int from a ByteBuffer....
-     */
-    private int getInt(ByteBuffer bb, int intIndex) {
-
-        int myInt = 0;
-        for (int i = 0; i < 4; i++) {
-
-            myInt = (myInt << (i * 8)) ^ bb.get(i);
-        }
-
-        return myInt;
-    }
-
-    /**
      * Read from a compressed file.
      *
      * @param compressedFileName the name of the compressed file.
@@ -227,8 +213,8 @@ public class HuffmanCompression {
         byte[] bytes = new byte[(longestEncodingBytes * 8)];
 
         // TODO: ALTER SOME CODE SO I CAN HANDLE THE CASE WHERE THE FILE IS VERY LARGE
-        // MAKE FineBytes WORK WITH A LONG CAPACITY!
-        // Multiple byte arrays!!!!
+        //          Alternate reading/writing etc
+        //          Perhaps use Java8 streams?
         FineBytes fineBytes = new FineBytes((int) compressedFile.length());
         String bitString;
         String curEncoding = null;
@@ -359,8 +345,10 @@ public class HuffmanCompression {
         return encodingMap;
     }
 
-    // Wrapper class to store data about characters read from file and 
-    // also has fields to construct a Huffman tree
+    /**
+     * Wrapper class to store data about characters read from file and 
+     * also has fields to construct a Huffman tree.
+     */
     class HuffmanNode {
         float freq;
         Character c;
@@ -373,7 +361,7 @@ public class HuffmanCompression {
      * 
      * @param file the text file to run the Huffman encoding on.
      */
-    public Map<Character, String> HuffmanEncoding(File file) throws FileNotFoundException {
+    public Map<Character, String> huffmanEncoding(File file) throws FileNotFoundException {
 
         // Read in characters and organize data
         Map<Character, HuffmanNode> initialCharacterMap = new HashMap<Character, HuffmanNode>();
