@@ -64,6 +64,7 @@ public class HuffmanCompression {
         }
         else if (args[0].equals("decompress") && args.length == 3) {
             
+            System.out.println("Decompressing: " + args[1]);
             hc.decompressFile(args[1], args[2]);
         }
     }
@@ -72,537 +73,6 @@ public class HuffmanCompression {
     private static final String MAGIC_ENCODING_DELIMITER = ":::DELIMITOR-EXTRORDINAIRE!!!!:::";
     private static final String MAGIC_LINE_ENDER = "::::::::::\n";
     private static final String MAGIC_STRING_OF_COLONS = "::::::::::";
-
-    /**
-     * Inner class to support bit-level byte manipulation in an array of bytes.
-     * This array of bytes can be accessed by a byte index and a bit index. 
-     */
-    private class FineBytes {
-
-        //~Constants-----------------------------------
-        private static final int DEFAULT_CAPACITY = 20;
-
-        //~Fields--------------------------------------
-        private byte[] bytes;
-        private int bitIndex;
-        private int byteIndex;
-
-        /**
-         * Set up the byte array with the DEFAULT_CAPACITY (20) and 0 out everything.
-         */
-        public FineBytes() {
-            
-            bytes = new byte[DEFAULT_CAPACITY];
-            for (int i = 0; i < bytes.length; i++) {
-            
-                bytes[i] = 0x00;
-            }
-            bitIndex = 0;
-            byteIndex = 0;
-        }
-
-        /**
-         * Set up the byte array with the passed in capacity and 0 out everything.
-         */
-        public FineBytes(int capacity) {
-            
-            bytes = new byte[capacity];
-            for (int i = 0; i < bytes.length; i++) {
-            
-                bytes[i] = 0x00;
-            }
-            bitIndex = 0;
-            byteIndex = 0;
-        }
-
-        /**
-         * Set up the byte array with the passed in byte array.
-         */
-        public FineBytes(byte[] bytes) {
-            
-            this.bytes = bytes;
-            bitIndex = 0;
-            byteIndex = bytes.length;
-        }
-
-        /**
-         * Set up the byte array using a string of binary digits. 
-         */
-        public FineBytes(String binaryString) {
-
-            bytes = new byte[((int) Math.ceil(binaryString.length() / 8))];
-
-            for (int i = 0; i < bytes.length; i++) {
-                
-                bytes[i] = 0x00;
-            }
-
-            byteIndex = 0;
-            bitIndex = 0;
-
-            String byteSizedString;
-            for (int i = 0; i < binaryString.length(); i += 8) {
-
-                if (i + 7 < binaryString.length()) {
-                    
-                    byteSizedString = binaryString.substring(i, i + 8);
-                    bytes[byteIndex] = this.parseBinaryString(byteSizedString);
-                    byteIndex++;
-                } else {
-                    
-                    byteSizedString = binaryString.substring(i, binaryString.length());
-                    bytes[byteIndex] = this.parseBinaryString(byteSizedString);
-                    bitIndex += byteSizedString.length();
-                }
-            }
-        }
-
-        /**
-         * Double the size of the byte array.
-         */
-        private void resize() {
-            byte[] newBytes = new byte[bytes.length * 2];
-            for (int i = 0; i < bytes.length; i++) {
-                
-                newBytes[i] = bytes[i];
-            }
-            for (int j = bytes.length; j < newBytes.length; j++) {
-                
-                newBytes[j] = 0x00;
-            }
-            bytes = newBytes;
-        }
-
-        /**
-         * Add an array of bytes to the end.
-         */
-        public void addBytes(byte[] newBytes) {
-
-            if ((byteIndex + newBytes.length) >= bytes.length) {
-                
-                resize();
-            }
-
-            if (this.bitIndex != 0) {
-                
-                byte bitMask = 0x00;
-                switch (this.bitIndex) {
-                    case 1:
-                        bitMask = 0x7F;
-                        break;
-                    case 2:
-                        bitMask = 0x3F;
-                        break;
-                    case 3:
-                        bitMask = 0x1F;
-                        break;
-                    case 4:
-                        bitMask = 0x0F;
-                        break;
-                    case 5:
-                        bitMask = 0x07;
-                        break;
-                    case 6:
-                        bitMask = 0x03;
-                        break;
-                    case 7:
-                        bitMask = 0x01;
-                        break;
-                    default:
-                        throw IllegalStateException("");
-                }
-
-                bytes[this.byteIndex] = (byte) ((bytes[this.byteIndex] << (8 - bitIndex)) 
-                        ^ ((newBytes[0] >>> this.bitIndex) & bitMask));
-                this.byteIndex++;
-                int newBytesBitIndex = 8 - this.bitIndex;
-                this.bitIndex = 0;
-
-                //todo: fix this awful mess....
-                int newByteIndex = 0;
-                while (newByteIndex < newBytes.length) {
-
-                    if (this.bitIndex != 0) {
-
-                        bitMask = 0x00;
-                        switch (this.bitIndex) {
-                            case 1:
-                                bitMask = 0x7F;
-                                break;
-                            case 2:
-                                bitMask = 0x3F;
-                                break;
-                            case 3:
-                                bitMask = 0x1F;
-                                break;
-                            case 4:
-                                bitMask = 0x0F;
-                                break;
-                            case 5:
-                                bitMask = 0x07;
-                                break;
-                            case 6:
-                                bitMask = 0x03;
-                                break;
-                            case 7:
-                                bitMask = 0x01;
-                                break;
-                            default:
-                                throw IllegalStateException("");
-                        }
-
-                        bytes[this.byteIndex] = (byte) ((bytes[this.byteIndex] << (8 - bitIndex)) 
-                                ^ ((newBytes[newByteIndex] >>> this.bitIndex) & bitMask));
-                        this.byteIndex++;
-                        newBytesBitIndex = 8 - this.bitIndex;
-                        this.bitIndex = 0;                        
-                    }
-                    else {
-
-                        bitMask = 0x00;
-                        switch (newBytesBitIndex) {
-                            case 1:
-                                bitMask = 0x7F;
-                                break;
-                            case 2:
-                                bitMask = 0x3F;
-                                break;
-                            case 3:
-                                bitMask = 0x1F;
-                                break;
-                            case 4:
-                                bitMask = 0x0F;
-                                break;
-                            case 5:
-                                bitMask = 0x07;
-                                break;
-                            case 6:
-                                bitMask = 0x03;
-                                break;
-                            case 7:
-                                bitMask = 0x01;
-                                break;
-                            default:
-                                throw IllegalStateException("");
-                        }
-
-                        bytes[this.byteIndex] = (byte) ((bytes[this.byteIndex]) 
-                                ^ (newBytes[newByteIndex] & bitMask));
-                        this.bitIndex = 8 - newBytesBitIndex;
-                        newByteIndex++;
-                    }
-                }
-            }
-            else {
-
-                for (int j = 0; j < newBytes.length; this.byteIndex++, j++) {
-
-                    bytes[this.byteIndex] = newBytes[j];
-                }
-            }
-        }
-
-        /**
-         * Add a string of bits to the end.
-         */
-        public void addBits(String binaryString) {
-
-            //If we need to resize
-            if ((byteIndex + binaryString.length()) >= bytes.length) {
-                
-                resize();
-            }
-
-            String byteSizedString;
-            if (bitIndex != 0) {
-
-                int substringEndIndex = ((8 - bitIndex) > binaryString.length()) 
-                        ? binaryString.length() : (8 - bitIndex);
-                String bitSmallerString = binaryString.substring(0, substringEndIndex);
-                byte tempByte = this.parseBinaryString(bitSmallerString);
-
-                //handle the fucking signed-ness
-                if ((bitIndex + substringEndIndex) <= 7) {
-
-                    bytes[byteIndex] = (byte) ((((int) bytes[byteIndex]) << substringEndIndex) 
-                            ^ tempByte);
-                    bitIndex += substringEndIndex;
-                }
-                else {
-
-                    bytes[byteIndex] = (byte) ((((int) bytes[byteIndex]) << substringEndIndex) 
-                            ^ tempByte);
-                    bitIndex = 0;
-                    byteIndex++;
-                }
-                binaryString = binaryString.substring(substringEndIndex, binaryString.length());
-
-                if (binaryString.length() == 0) {
-
-                    return;
-                }
-            }
-
-            for (int i = 0; i < binaryString.length(); i += 8) {
-                
-                if (bitIndex != 0) {
-
-                    int substringEndIndex = ((8 - bitIndex) > binaryString.length()) 
-                            ? binaryString.length() : (8 - bitIndex);
-                    String bitSmallerString = binaryString.substring(0, substringEndIndex);
-                    byte tempByte = this.parseBinaryString(bitSmallerString);
-                    bytes[byteIndex] = (byte) ((bytes[byteIndex] << substringEndIndex) ^ tempByte);
-
-                    if ((bitIndex + substringEndIndex) <= 7) {
-
-                        bitIndex += substringEndIndex;
-                    }
-                    else {
-
-                        bitIndex = 0;
-                        byteIndex++;
-                    }
-                }
-                else if ((i + 7) < binaryString.length()) {
-
-                    byteSizedString = binaryString.substring(i, i + 8);
-                    bytes[byteIndex] = this.parseBinaryString(byteSizedString);
-                    byteIndex++;
-                }
-                else {
-
-                    byteSizedString = binaryString.substring(i, binaryString.length());
-                    bytes[byteIndex] = this.parseBinaryString(byteSizedString);
-                    bitIndex += byteSizedString.length();
-                }
-            }
-        }
-
-        /**
-         * Parse a string of binary digits into bytes.
-         */
-        public byte parseBinaryString(String binaryString) {
-
-            //If we're going to overflow
-            if (binaryString.length() == 8 && binaryString.charAt(0) == '1') {
-
-                char[] binaryCharArray = binaryString.toCharArray();
-                binaryCharArray[0] = '0';
-                binaryString = "-" + new String(binaryCharArray);
-            }
-
-            return Byte.parseByte(binaryString, 2);
-        }
-
-        /**
-         * Get the byte at the end of the array which is not fully used.
-         */
-        public Byte getIncompleteByte() {
-            
-            if (bitIndex != 0) {
-                
-                return bytes[byteIndex];
-            }
-            else {
-                
-                return null;
-            }
-        }
-
-        /**
-         * Check if there is a byte at the end of the array which is not fully used.
-         */
-        public boolean hasIncompleteByte() {
-            
-            return (bitIndex != 0);
-        }
-
-        /**
-         * Get all the bytes backing this object.
-         * The bytes are copied and returned.
-         */
-        public byte[] getCompleteBytes() {
-
-            return (bitIndex != 0) ? copyBackingArray(byteIndex) : copyBackingArray(byteIndex + 1);
-        }
-
-        /**
-         * Copy the backing array of this object.
-         */
-        private byte[] copyBackingArray() {
-
-            byte[] copy = new byte[bytes.length];
-            for (int i = 0; i < bytes.length; i++) {
-                
-                copy[i] = bytes[i];
-            }
-
-            return copy;
-        }
-
-        /**
-         * Copy the backing array of this object up until index.
-         * Index is exclusive.
-         */
-        private byte[] copyBackingArray(int index) {
-            
-            byte[] copy = new byte[index + 1];
-
-            for (int i = 0; i < (index + 1); i++) {
-                
-                copy[i] = bytes[i];
-            }
-
-            return copy;   
-        }
-
-        /**
-         * Get all the fully filled in bytes. Excluding any partially filled in bytes.
-         */
-        public byte[] getBytes() {
-
-            int copyIndex = (bitIndex != 0) ? byteIndex : (byteIndex - 1);
-            return copyBackingArray(copyIndex);
-        }
-
-        /**
-         * Get the bit string of a passed byte.
-         */
-        public static String getBitString(byte b) {
-
-            StringBuilder build = new StringBuilder();
-
-            String byteString;
-            byteString = Integer.toBinaryString(b & 0xFF);
-
-            for (int j = 0; j < (8 - byteString.length()); j++) {
-
-                build.append("0");
-            }
-
-            build.append(byteString);
-
-            return build.toString();
-        }
-
-        /**
-         * Get the bit string of a passed byte array.
-         */
-        public static String getBitString(byte[] bytes) {
-
-            StringBuilder build = new StringBuilder();
-
-            String byteString;
-            for (int i = 0; i < bytes.length; i++) {
-                
-                build.append(getBitString(bytes[i]));
-            }
-
-            return build.toString();
-        }
-
-        /**
-         * Get the bit string of this FineBytes object.
-         */
-        public String getBitString() {
-
-            StringBuilder build = new StringBuilder();
-
-            String byteString;
-            for (int i = 0; i < byteIndex; i++) {
-                
-                byteString = Integer.toBinaryString(bytes[i] & 0xFF);
-
-                for (int j = 0; j < (8 - byteString.length()); j++) {
-
-                    build.append("0");
-                }
-
-                build.append(byteString);
-            }
-
-            if (bitIndex != 0) {
-
-                String binaryString = Integer.toBinaryString(bytes[byteIndex] & 0xFF);
-
-                if (bitIndex == (binaryString.length() % 8)) {
-
-                    build.append(binaryString.substring(0, bitIndex));    
-                }
-                else {
-
-                    for (int i = 0; i < bitIndex - (binaryString.length() % 8); i++) {
-
-                        build.append("0");
-                    }
-
-                    build.append(binaryString);
-                }
-            }
-
-            return build.toString();
-        }
-
-        /**
-         * Get a hex string of the bytes in this FineBytes object.
-         */
-        public String getHexString() {
-
-            StringBuilder build = new StringBuilder();
-
-            String hexString32Bit;
-            for (int i = 0; i < byteIndex; i++) {
-
-                hexString32Bit = Integer.toHexString(bytes[i]);
-                int beginIndex = (hexString32Bit.length() >= 2) ? (hexString32Bit.length() - 2) : 0;
-                if ((hexString32Bit.length() - beginIndex) < 2) {
-
-                    build.append("0");
-                }
-                build.append(hexString32Bit.substring(beginIndex, hexString32Bit.length()));
-            }
-
-            if (bitIndex != 0) {
-
-                hexString32Bit = Integer.toHexString(bytes[byteIndex + 1]);
-
-                int beginIndex = (hexString32Bit.length() >= 2) ? (hexString32Bit.length() - 2) : 0;
-                if ((hexString32Bit.length() - beginIndex) < 2) {
-
-                    build.append("0");
-                }
-                build.append(hexString32Bit.substring(beginIndex, hexString32Bit.length()));
-            }
-
-            return build.toString();
-        }
-
-        /**
-         * Clear out the bytes and bits in this object.
-         */
-        public void clear() {
-            
-            bytes = new byte[bytes.length];
-            bitIndex = 0;
-            byteIndex = 0;
-        }
-
-        /**
-         * Get the number of bytes in this object (including partials).
-         */
-        public int numBytes() {
-            
-            return byteIndex;
-        }
-
-        /**
-         * Get the total number of bits in this object.
-         */
-        public int numBits() {
-            
-            return (byteIndex * 8) + bitIndex;
-        }
-    }
 
     /**
      * Compress the file corresponding to the passed name.
@@ -664,31 +134,26 @@ public class HuffmanCompression {
 
             nextString = scan.next();
             c = nextString.charAt(0);
-            System.out.print(c);
             charEncoding = encoding.get(c);
             fineBytes.addBits(charEncoding);
 
-            //If we have 100 bytes and no incomplete bytes
+            // If we have 100 bytes and no incomplete bytes
             if (fineBytes.numBytes() >= 100 && !fineBytes.hasIncompleteByte()) {
 
-                //WRITE!
-                System.out.println("WRITE (in middle)");
-                System.out.println(fineBytes.getHexString());
+                // WRITE!
                 os.write(fineBytes.getBytes());
                 totalBytesWritten += fineBytes.numBytes();
                 fineBytes.clear();
             }
         }
 
-        System.out.println("WRITE (at end)");
-        System.out.println(fineBytes.getHexString());
         os.write(fineBytes.getBytes());
         totalBytesWritten += fineBytes.numBytes();
 
         os.close();
         scan.close();
 
-        //Write Encoding to file to be retrieved later
+        // Write Encoding to file to be retrieved later
         File encodingFile = new File("encoding-file.txt");
         os = new FileOutputStream(encodingFile);
         for (Character myChar : encoding.keySet()) {
@@ -736,7 +201,7 @@ public class HuffmanCompression {
         System.out.println("readCompressed Method");
         StringBuilder build = new StringBuilder();
 
-        //Read encoding file
+        // Read encoding file
         Map<String, Character> encodingMap = readEncodingFile(encodingFileName);
         int longestEncodingBits = 0;
         int longestEncodingBytes = 0;
@@ -748,53 +213,52 @@ public class HuffmanCompression {
             }
         }
         longestEncodingBytes = (longestEncodingBits / 8) + 1;        
-        System.out.println("enc:: " + encodingMap);
 
-        //Setup to read from the compressed file
+        // Setup to read from the compressed file
         File compressedFile = new File(compressedFileName);
         InputStream is = new FileInputStream(compressedFile);
 
-        //Three buffers: 
-        //numBytesBytes: read the long numBytesBytes value from file
-        //numBitsBytes: read the int numBitsBytes from file
-        //bytes[]: read the data from the file in a buffer
+        // Three buffers: 
+        // numBytesBytes: read the long numBytesBytes value from file
+        // numBitsBytes: read the int numBitsBytes from file
+        // bytes[]: read the data from the file in a buffer
         byte[] numBytesBytes = new byte[8];
         byte[] numBitsBytes = new byte[4];
         byte[] bytes = new byte[(longestEncodingBytes * 8)];
 
-        //TODO: ALTER SOME CODE SO I CAN HANDLE THE CASE WHERE THE FILE IS VERY LARGE
-        //MAKE FineBytes WORK WITH A LONG CAPACITY!
-        //Multiple byte arrays!!!!
+        // TODO: ALTER SOME CODE SO I CAN HANDLE THE CASE WHERE THE FILE IS VERY LARGE
+        // MAKE FineBytes WORK WITH A LONG CAPACITY!
+        // Multiple byte arrays!!!!
         FineBytes fineBytes = new FineBytes((int) compressedFile.length());
         String bitString;
         String curEncoding = null;
         char decodedChar;
         
-        //Variables to keep track of total bytes and bits in the file
+        // Variables to keep track of total bytes and bits in the file
         long totalBytes;
         int totalLeftoverBits;
         long totalBytesRead = 0;
         int totalLeftoverBitsRead = 0;
 
-        //num bytes read per read call
+        // Num bytes read per read call
         int bytesRead;
 
-        //Read num bytes
+        // Read num bytes
         bytesRead = is.read(numBytesBytes);
         LongBuffer numBytesLongBuffer = ByteBuffer.wrap(numBytesBytes).asLongBuffer();
         totalBytes = numBytesLongBuffer.get();
         numBytesLongBuffer = null;
 
-        //Read num leftover bits
+        // Read num leftover bits
         bytesRead = is.read(numBitsBytes);
         IntBuffer numBitsIntBuffer = ByteBuffer.wrap(numBitsBytes).asIntBuffer();
         totalLeftoverBits = numBitsIntBuffer.get();
         numBitsIntBuffer = null;
 
-        //indices within the binary string
+        // Indices within the binary string
         int encodingStart = -1, prevEncodingEnd = -1, encodingEnd = -1;
 
-        //Read bytes and write them out to string
+        // Read bytes and write them out to string
         while ((bytesRead = is.read(bytes)) != -1) {
 
             fineBytes.addBytes(bytes);
@@ -806,7 +270,7 @@ public class HuffmanCompression {
 
                 curEncoding = bitString.substring(encodingStart, encodingEnd);
 
-                //Check for the current encoding in the mapping
+                // Check for the current encoding in the mapping
                 if (encodingMap.containsKey(curEncoding)) {
 
                     totalLeftoverBitsRead += curEncoding.length();
@@ -814,7 +278,6 @@ public class HuffmanCompression {
                     totalLeftoverBitsRead %= 8;
 
                     decodedChar = encodingMap.get(curEncoding);
-                    System.out.println((int) decodedChar);
 
                     if ((int) decodedChar != 13) {
 
@@ -823,7 +286,6 @@ public class HuffmanCompression {
                     else {
                         build.append("\n");
                     }
-                    System.out.println(build.toString());
 
                     encodingStart = encodingEnd;
                     prevEncodingEnd = encodingEnd;
@@ -832,16 +294,12 @@ public class HuffmanCompression {
                 }
                 else if (totalBytesRead == totalBytes 
                         && totalLeftoverBitsRead == totalLeftoverBits) {
-
-                    System.out.println("Decompressed stuff: ||");
-                    System.out.println(build.toString());
-                    System.out.println("UPPER end readCompressed method");
                     is.close();
                     return;
                 }
                 else {
 
-                    //break;
+                    // break;
                 }
             }
 
@@ -852,20 +310,17 @@ public class HuffmanCompression {
         }
 
         is.close();
-
-        System.out.println("Decompressed stuff: ||" + build.toString() + "||");
-        System.out.println("LOWER end readCompressed method");
     }
 
     public void decompressFile(String fileName, String encodingFileName) 
             throws FileNotFoundException {
 
-        //Read encoding file
+        // Read encoding file
         Map<String, Character> encodingMap = readEncodingFile(encodingFileName);
 
-        //Read compressed file
+        // Read compressed file
         //         and
-        //Write decompressed file
+        // Write decompressed file
 
     }
 
@@ -889,7 +344,7 @@ public class HuffmanCompression {
 
             encodingLine = scan.next();
 
-            //This magical character is breaking things here.....it's like carbon monoxide....
+            // This magical character is breaking things here.....it's like carbon monoxide....
             if (encodingLine.indexOf(MAGIC_ENCODING_DELIMITER) == 0) {
                 continue;
             }
@@ -904,8 +359,8 @@ public class HuffmanCompression {
         return encodingMap;
     }
 
-    //Wrapper class to store data about characters read from file and 
-    //also has fields to construct a Huffman tree
+    // Wrapper class to store data about characters read from file and 
+    // also has fields to construct a Huffman tree
     class HuffmanNode {
         float freq;
         Character c;
@@ -920,7 +375,7 @@ public class HuffmanCompression {
      */
     public Map<Character, String> HuffmanEncoding(File file) throws FileNotFoundException {
 
-        //Read in characters and organize data
+        // Read in characters and organize data
         Map<Character, HuffmanNode> initialCharacterMap = new HashMap<Character, HuffmanNode>();
         Scanner scan = new Scanner(file);
         scan.useDelimiter("");
@@ -948,8 +403,8 @@ public class HuffmanCompression {
             }
         }
 
-        //Find the Huffman encoding---------------------------------
-        //Define PriorityQueue w/Comparator
+        // Find the Huffman encoding---------------------------------
+        // Define PriorityQueue w/Comparator
         PriorityQueue<HuffmanNode> q = new PriorityQueue<HuffmanNode>(initialCharacterMap.size(), 
             new Comparator<HuffmanNode>() {
                 public int compare(HuffmanNode n1, HuffmanNode n2) {
@@ -969,15 +424,15 @@ public class HuffmanCompression {
                 }
         });
 
-        //Divide the counts in each node by the total number of characters
-        //and add nodes to the priority queue to prep for Huffman tree algorithm
+        // Divide the counts in each node by the total number of characters
+        // and add nodes to the priority queue to prep for Huffman tree algorithm
         for (HuffmanNode hn : initialCharacterMap.values()) {
 
             hn.freq /= numChars;
             q.add(hn);
         }
 
-        //Construct Huffman tree
+        // Construct Huffman tree
         HuffmanNode innerNode;
         HuffmanNode left;
         HuffmanNode right;
@@ -993,7 +448,7 @@ public class HuffmanCompression {
             q.add(innerNode);
         }
 
-        //Retrieve the encoding as a mapping from characters to binary strings
+        // Retrieve the encoding as a mapping from characters to binary strings
         HuffmanNode root = q.poll();
         Map<Character, String> encodingMap = new HashMap<Character, String>();
         getEncodingFromHuffmanTree(root, encodingMap, "");
