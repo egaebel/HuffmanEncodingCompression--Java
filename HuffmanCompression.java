@@ -61,8 +61,7 @@ public class HuffmanCompression {
             
             System.out.println("Compressing: " + args[1]);
             hc.compressFile(args[1]);
-        }
-        else if (args[0].equals("decompress") && args.length == 3) {
+        } else if (args[0].equals("decompress") && args.length == 3) {
             
             System.out.println("Decompressing: " + args[1]);
             hc.decompressFile(args[1], args[2]);
@@ -73,6 +72,7 @@ public class HuffmanCompression {
     private static final String MAGIC_ENCODING_DELIMITER = ":::DELIMITOR-EXTRORDINAIRE!!!!:::";
     private static final String MAGIC_LINE_ENDER = "::::::::::\n";
     private static final String MAGIC_STRING_OF_COLONS = "::::::::::";
+    private static final String MAGIC_EOF = "::::EOF";
 
     /**
      * Compress the file corresponding to the passed name.
@@ -102,6 +102,7 @@ public class HuffmanCompression {
 
         System.out.println("writeCompressed");
 
+        // Create encoding
         String nextString;
         char c;
         String charEncoding;
@@ -121,6 +122,7 @@ public class HuffmanCompression {
         byteCount = bitCount / 8;
         bitCount %= 8;
 
+        // Write using encoding
         Scanner scan = new Scanner(file);   
         scan.useDelimiter("");
 
@@ -147,6 +149,7 @@ public class HuffmanCompression {
             }
         }
 
+        fineBytes.addBytes(MAGIC_EOF.getBytes());
         os.write(fineBytes.getBytes());
         totalBytesWritten += fineBytes.numBytes();
 
@@ -161,8 +164,7 @@ public class HuffmanCompression {
             if (myChar.charValue() == '\n') {
                 
                 os.write("\n".getBytes());
-            }
-            else {
+            } else {
                 
                 os.write(myChar.charValue());
             }
@@ -256,7 +258,6 @@ public class HuffmanCompression {
 
                 curEncoding = bitString.substring(encodingStart, encodingEnd);
 
-                // Check for the current encoding in the mapping
                 if (encodingMap.containsKey(curEncoding)) {
 
                     totalLeftoverBitsRead += curEncoding.length();
@@ -266,10 +267,8 @@ public class HuffmanCompression {
                     decodedChar = encodingMap.get(curEncoding);
 
                     if ((int) decodedChar != 13) {
-
                         build.append(Character.toString(decodedChar));
-                    }
-                    else {
+                    } else {
                         build.append("\n");
                     }
 
@@ -277,15 +276,12 @@ public class HuffmanCompression {
                     prevEncodingEnd = encodingEnd;
                     curEncoding = null;
                     continue;
-                }
-                else if (totalBytesRead == totalBytes 
+                } else if (totalBytesRead == totalBytes 
                         && totalLeftoverBitsRead == totalLeftoverBits) {
                     is.close();
+                    System.out.println("Final Read Data (outside loop): ");
+                    System.out.println(build.toString());
                     return;
-                }
-                else {
-
-                    // break;
                 }
             }
 
@@ -296,6 +292,9 @@ public class HuffmanCompression {
         }
 
         is.close();
+
+        System.out.println("Final Read Data (outside loop): ");
+        System.out.println(build.toString());
     }
 
     public void decompressFile(String fileName, String encodingFileName) 
@@ -308,6 +307,11 @@ public class HuffmanCompression {
         //         and
         // Write decompressed file
 
+        try {
+            readCompressed(fileName, encodingFileName);
+        } catch(IOException exception) {
+            System.out.println("Error in readCompressed");
+        }
     }
 
     /**
@@ -379,8 +383,7 @@ public class HuffmanCompression {
                 
                 node = initialCharacterMap.get(c);
                 node.freq++;
-            }
-            else {
+            } else {
                 
                 node = new HuffmanNode();
                 node.freq = 1;
@@ -398,15 +401,10 @@ public class HuffmanCompression {
                 public int compare(HuffmanNode n1, HuffmanNode n2) {
 
                     if (n1.freq < n2.freq) {
-                        
                         return -1;
-                    }
-                    else if (n1.freq > n2.freq) {
-                        
+                    } else if (n1.freq > n2.freq) {  
                         return 1;
-                    }
-                    else {
-                        
+                    } else {
                         return 0;
                     }
                 }
@@ -460,8 +458,7 @@ public class HuffmanCompression {
         if (root.c != null) {
             
             encodingMap.put(root.c, curEncoding);
-        }
-        else {
+        } else {
             
             getEncodingFromHuffmanTree(root.left, encodingMap, curEncoding + "0");
             getEncodingFromHuffmanTree(root.right, encodingMap, curEncoding + "1");

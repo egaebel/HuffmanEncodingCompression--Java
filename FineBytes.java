@@ -215,8 +215,7 @@ public class FineBytes {
                     this.byteIndex++;
                     newBytesBitIndex = 8 - this.bitIndex;
                     this.bitIndex = 0;                        
-                }
-                else {
+                } else {
 
                     bitMask = 0x00;
                     switch (newBytesBitIndex) {
@@ -251,8 +250,7 @@ public class FineBytes {
                     newByteIndex++;
                 }
             }
-        }
-        else {
+        } else {
 
             for (int j = 0; j < newBytes.length; this.byteIndex++, j++) {
 
@@ -286,8 +284,7 @@ public class FineBytes {
                 bytes[byteIndex] = (byte) ((((int) bytes[byteIndex]) << substringEndIndex) 
                         ^ tempByte);
                 bitIndex += substringEndIndex;
-            }
-            else {
+            } else {
 
                 bytes[byteIndex] = (byte) ((((int) bytes[byteIndex]) << substringEndIndex) 
                         ^ tempByte);
@@ -315,20 +312,17 @@ public class FineBytes {
                 if ((bitIndex + substringEndIndex) <= 7) {
 
                     bitIndex += substringEndIndex;
-                }
-                else {
+                } else {
 
                     bitIndex = 0;
                     byteIndex++;
                 }
-            }
-            else if ((i + 7) < binaryString.length()) {
+            } else if ((i + 7) < binaryString.length()) {
 
                 byteSizedString = binaryString.substring(i, i + 8);
                 bytes[byteIndex] = this.parseBinaryString(byteSizedString);
                 byteIndex++;
-            }
-            else {
+            } else {
 
                 byteSizedString = binaryString.substring(i, binaryString.length());
                 bytes[byteIndex] = this.parseBinaryString(byteSizedString);
@@ -340,7 +334,7 @@ public class FineBytes {
     /**
      * Parse a string of binary digits into bytes.
      */
-    public byte parseBinaryString(String binaryString) {
+    public static byte parseBinaryString(String binaryString) {
 
         //If we're going to overflow
         if (binaryString.length() == 8 && binaryString.charAt(0) == '1') {
@@ -361,8 +355,7 @@ public class FineBytes {
         if (bitIndex != 0) {
             
             return bytes[byteIndex];
-        }
-        else {
+        } else {
             
             return null;
         }
@@ -416,12 +409,58 @@ public class FineBytes {
     }
 
     /**
+     * Copy the backing array of this object from beginIndex up until endIndex.
+     * beginIndex is inclusive.
+     * endIndex is exclusive.
+     * 
+     * @param beginIndex the index to begin copying at.
+     * @param endIndex the index to stop copying at.
+     * @return The copied section of bytes in this object.
+     */
+    private byte[] copyBackingArray(int beginIndex, int endIndex) {
+        
+        byte[] copy = new byte[endIndex + 1];
+
+        for (int i = 0; i < (endIndex + 1); i++) {
+            
+            copy[i] = bytes[beginIndex + i];
+        }
+
+        return copy;   
+    }
+
+    /**
      * Get all the fully filled in bytes. Excluding any partially filled in bytes.
      */
     public byte[] getBytes() {
 
         int copyIndex = (bitIndex != 0) ? byteIndex : (byteIndex - 1);
         return copyBackingArray(copyIndex);
+    }
+
+    /**
+     * Get the last numBytes from the FineBytes array.
+     * The last numBytes begins at the last valid bit index.
+     *
+     * @param numBytes the number of bytes to get from the byte array.
+     * @return the final numBytes in the byte array.
+     */
+    public byte[] getLastBytes(int numBytes) {
+        if (bitIndex == 0) {
+            return copyBackingArray((bytes.length - numBytes), bytes.length);
+        }
+
+        int beginByteIndex = (bytes.length - numBytes);
+        byte[] copy = new byte[numBytes];
+        for (int i = 0; i <= numBytes; i++) {
+
+            if (numBytes > i && i > 0) {
+                copy[i - 1] = (byte) (((int) copy[i]) 
+                        ^ (((int) bytes[beginByteIndex]) >> (8 - bitIndex)));
+            }
+            copy[i] = (byte) (((int) bytes[beginByteIndex]) << bitIndex); 
+        }
+        return copy;
     }
 
     /**
@@ -487,8 +526,7 @@ public class FineBytes {
             if (bitIndex == (binaryString.length() % 8)) {
 
                 build.append(binaryString.substring(0, bitIndex));    
-            }
-            else {
+            } else {
 
                 for (int i = 0; i < bitIndex - (binaryString.length() % 8); i++) {
 
